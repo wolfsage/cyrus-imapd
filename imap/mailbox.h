@@ -474,9 +474,10 @@ enum {
     ENV_CC,
     ENV_BCC,
     ENV_INREPLYTO,
+    ENV_REFERENCES,
     ENV_MSGID
 };
-#define NUMENVTOKENS (10)
+#define NUMENVTOKENS (11)
 
 /*
  * This structure maintains a list of FLAG_ to the string literal mapping.

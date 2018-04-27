@@ -1947,6 +1947,8 @@ static void message_write_envelope(struct buf *buf, const struct body *body)
     buf_putc(buf, ' ');
     message_write_nstring(buf, body->in_reply_to);
     buf_putc(buf, ' ');
+    message_write_nstring(buf, body->references);
+    buf_putc(buf, ' ');
     message_write_nstring(buf, body->message_id);
     buf_putc(buf, ')');
 }
@@ -2848,6 +2850,9 @@ static int message_read_envelope(struct protstream *strm, struct body *body)
     /* in-reply-to */
     c = message_read_nstring(strm, &body->in_reply_to, 1);
 
+    /* in-reply-to */
+    c = message_read_nstring(strm, &body->references, 1);
+
     /* message-id */
     c = message_read_nstring(strm, &body->message_id, 1);
 
@@ -3300,22 +3305,16 @@ EXPORTED int message_update_conversations(struct conversations_state *state,
         strarray_t want = STRARRAY_INITIALIZER;
         char *envtokens[NUMENVTOKENS];
 
-        /* get References from cached headers */
-        c_refs = xstrndup(cacheitem_base(record, CACHE_HEADERS),
-                          cacheitem_size(record, CACHE_HEADERS));
-        strarray_append(&want, "references");
-        message_pruneheader(c_refs, &want, 0);
-        hdrs[0] = c_refs;
-
-        /* get In-Reply-To, Message-ID out of the envelope
+        /* get References, In-Reply-To, Message-ID out of the envelope
          *
          * get a working copy; strip outer ()'s
          * +1 -> skip the leading paren
          * -2 -> don't include the size of the outer parens
          */
         c_env = xstrndup(cacheitem_base(record, CACHE_ENVELOPE) + 1,
-                         cacheitem_size(record, CACHE_ENVELOPE) - 2);
+                         cacheitem_size(record, CACHE_ENVELOPE) - 3);
         parse_cached_envelope(c_env, envtokens, NUMENVTOKENS);
+        hdrs[0] = envtokens[ENV_REFERENCES];
         hdrs[1] = envtokens[ENV_INREPLYTO];
         hdrs[2] = envtokens[ENV_MSGID];
 
