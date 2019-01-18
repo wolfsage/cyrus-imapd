@@ -37,6 +37,51 @@ cache:
 os: linux
 compiler: gcc
 install:
+# cassandane
+- cpanm --notest experimental
+- cpanm --notest AnyEvent
+- cpanm --notest BSD::Resource
+- cpanm --notest Clone
+- cpanm --notest Config::IniFiles
+- cpanm --notest Convert::Base64
+- cpanm --notest Data::ICal
+- cpanm --notest Data::ICal::TimeZone
+- cpanm --notest Data::UUID
+- cpanm --notest DateTime
+- cpanm --notest DateTime::Format::ICal
+- cpanm --notest DateTime::Format::ISO8601
+- cpanm --notest Encode::IMAPUTF7
+- cpanm --notest File::LibMagic
+- cpanm --notest File::Slurp
+- cpanm --notest File::chdir
+- cpanm --notest HTTP::Tiny
+- cpanm --notest IO::Socket::INET6
+- cpanm --notest IO::Stringy
+- cpanm --notest JSON
+- cpanm --notest JSON::XS
+- cpanm --notest List::Pairwise
+- cpanm --notest MIME::Types
+- cpanm --notest Mail::IMAPTalk
+- cpanm --notest Math::Int64
+- cpanm --notest Net::LDAP::Server
+- cpanm --notest Net::Server
+- cpanm --notest News::NNTPClient
+- cpanm --notest String::CRC32
+- cpanm --notest Test::Unit
+- cpanm --notest Text::LevenshteinXS
+- cpanm --notest Text::VCardFast
+- cpanm --notest Tie::DataUUID
+- cpanm --notest Unix::Syslog
+- cpanm --notest XML::DOM
+- cpanm --notest XML::Fast
+- cpanm --notest XML::Generator
+- cpanm --notest XML::Spice
+- cpanm --notest https://github.com/cyrusimap/Mail-JMAPTalk.git
+- cpanm --notest https://github.com/cyrusimap/Net-DAVTalk.git
+- cpanm --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
+- cpanm --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
+- git clone -b master --single-branch https://github.com/cyrusimap/cassandane.git cassandane
+
 # libjanson
 - git clone -b cyrus --single-branch https://github.com/cyrusimap/jansson.git janson
 - pushd janson
@@ -73,10 +118,14 @@ before_script:
 - ./configure CFLAGS="-W -Wno-unused-parameter -g -O0 -Wall -Wextra -Werror -fPIC"
   --enable-coverage --enable-calalarmd --enable-autocreate --enable-nntp --enable-http
   --enable-jmap --enable-xapian --enable-unit-tests --enable-replication --with-openssl=yes
-  --enable-murder --enable-idled --enable-sieve
+  --enable-murder --enable-idled --enable-sieve --prefix=/usr/cyrus/
 - make
+- sudo make install
 script:
 - make check
+- pushd cassandane
+- sudo -E --config ../cassandane.ini ./testrunner.pl -f pretty -j 8
+  
 branches:
   only:
   - master
