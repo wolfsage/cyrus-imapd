@@ -129,6 +129,7 @@ script:
 branches:
   only:
   - master
+  - travis
   - cyrus-imapd-3.0
 notifications:
   slack:
