@@ -26,6 +26,7 @@ addons:
     - pkg-config
 env:
   global:
+  - CYRUS_USER=travis
   - CYRUSLIBS="/usr/local/cyruslibs"
   - PKG_CONFIG_PATH="$CYRUSLIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
   - LDFLAGS="-Wl,-rpath,$CYRUSLIBS/lib -Wl,-rpath,$CYRUSLIBS/lib/x86_64-linux-gnu"
