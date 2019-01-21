@@ -124,7 +124,7 @@ before_script:
 script:
 # - make check
 - pushd cassandane
-- perl ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
+- perl -I ~/perl5/lib/perl5/ -Mlocal::lib=~/perl5 ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
   
 branches:
   only:
