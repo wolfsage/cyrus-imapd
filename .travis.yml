@@ -5,6 +5,7 @@ group: edge
 addons:
   apt:
     packages:
+    - liblocal-lib-perl
     - libxml2-dev
     - libsqlite3-dev
     - libsasl2-dev
