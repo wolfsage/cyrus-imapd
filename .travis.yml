@@ -124,7 +124,7 @@ before_script:
 script:
 # - make check
 - pushd cassandane
-- sudo -E ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
+- sudo -E perl ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
   
 branches:
   only:
