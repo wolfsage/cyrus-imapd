@@ -40,7 +40,6 @@ os: linux
 compiler: gcc
 install:
 # cassandane
-- sudo mkdir /var/tmp
 - sudo mkdir /var/tmp/cass
 - sudo chmod 777 /var/tmp/cass
 - mkdir ~/extlib
