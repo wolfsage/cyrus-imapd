@@ -39,48 +39,49 @@ os: linux
 compiler: gcc
 install:
 # cassandane
-- cpanm --notest experimental
-- cpanm --notest AnyEvent
-- cpanm --notest BSD::Resource
-- cpanm --notest Clone
-- cpanm --notest Config::IniFiles
-- cpanm --notest Convert::Base64
-- cpanm --notest Data::ICal
-- cpanm --notest Data::ICal::TimeZone
-- cpanm --notest Data::UUID
-- cpanm --notest DateTime
-- cpanm --notest DateTime::Format::ICal
-- cpanm --notest DateTime::Format::ISO8601
-- cpanm --notest Encode::IMAPUTF7
-- cpanm --notest File::LibMagic
-- cpanm --notest File::Slurp
-- cpanm --notest File::chdir
-- cpanm --notest HTTP::Tiny
-- cpanm --notest IO::Socket::INET6
-- cpanm --notest IO::Stringy
-- cpanm --notest JSON
-- cpanm --notest JSON::XS
-- cpanm --notest List::Pairwise
-- cpanm --notest MIME::Types
-- cpanm --notest Mail::IMAPTalk
-- cpanm --notest Math::Int64
-- cpanm --notest Net::LDAP::Server
-- cpanm --notest Net::Server
-- cpanm --notest News::NNTPClient
-- cpanm --notest String::CRC32
-- cpanm --notest Test::Unit
-- cpanm --notest Text::LevenshteinXS
-- cpanm --notest Text::VCardFast
-- cpanm --notest Tie::DataUUID
-- cpanm --notest Unix::Syslog
-- cpanm --notest XML::DOM
-- cpanm --notest XML::Fast
-- cpanm --notest XML::Generator
-- cpanm --notest XML::Spice
-- cpanm --notest https://github.com/cyrusimap/Mail-JMAPTalk.git
-- cpanm --notest https://github.com/cyrusimap/Net-DAVTalk.git
-- cpanm --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
-- cpanm --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
+- mkdir ~/extlib
+- cpanm -L ~/extlib --notest experimental
+- cpanm -L ~/extlib --notest AnyEvent
+- cpanm -L ~/extlib --notest BSD::Resource
+- cpanm -L ~/extlib --notest Clone
+- cpanm -L ~/extlib --notest Config::IniFiles
+- cpanm -L ~/extlib --notest Convert::Base64
+- cpanm -L ~/extlib --notest Data::ICal
+- cpanm -L ~/extlib --notest Data::ICal::TimeZone
+- cpanm -L ~/extlib --notest Data::UUID
+- cpanm -L ~/extlib --notest DateTime
+- cpanm -L ~/extlib --notest DateTime::Format::ICal
+- cpanm -L ~/extlib --notest DateTime::Format::ISO8601
+- cpanm -L ~/extlib --notest Encode::IMAPUTF7
+- cpanm -L ~/extlib --notest File::LibMagic
+- cpanm -L ~/extlib --notest File::Slurp
+- cpanm -L ~/extlib --notest File::chdir
+- cpanm -L ~/extlib --notest HTTP::Tiny
+- cpanm -L ~/extlib --notest IO::Socket::INET6
+- cpanm -L ~/extlib --notest IO::Stringy
+- cpanm -L ~/extlib --notest JSON
+- cpanm -L ~/extlib --notest JSON::XS
+- cpanm -L ~/extlib --notest List::Pairwise
+- cpanm -L ~/extlib --notest MIME::Types
+- cpanm -L ~/extlib --notest Mail::IMAPTalk
+- cpanm -L ~/extlib --notest Math::Int64
+- cpanm -L ~/extlib --notest Net::LDAP::Server
+- cpanm -L ~/extlib --notest Net::Server
+- cpanm -L ~/extlib --notest News::NNTPClient
+- cpanm -L ~/extlib --notest String::CRC32
+- cpanm -L ~/extlib --notest Test::Unit
+- cpanm -L ~/extlib --notest Text::LevenshteinXS
+- cpanm -L ~/extlib --notest Text::VCardFast
+- cpanm -L ~/extlib --notest Tie::DataUUID
+- cpanm -L ~/extlib --notest Unix::Syslog
+- cpanm -L ~/extlib --notest XML::DOM
+- cpanm -L ~/extlib --notest XML::Fast
+- cpanm -L ~/extlib --notest XML::Generator
+- cpanm -L ~/extlib --notest XML::Spice
+- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Mail-JMAPTalk.git
+- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-DAVTalk.git
+- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
+- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
 - git clone -b master --single-branch https://github.com/cyrusimap/cassandane.git cassandane
 
 # libjanson
@@ -125,7 +126,7 @@ before_script:
 script:
 # - make check
 - pushd cassandane
-- perl -I ~/perl5/lib/perl5/ -Mlocal::lib=~/perl5 ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
+- perl -I ~/extlib ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
   
 branches:
   only:
