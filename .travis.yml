@@ -31,6 +31,7 @@ env:
   - PKG_CONFIG_PATH="$CYRUSLIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
   - LDFLAGS="-Wl,-rpath,$CYRUSLIBS/lib -Wl,-rpath,$CYRUSLIBS/lib/x86_64-linux-gnu"
   - XAPIAN_CONFIG="$CYRUSLIBS/bin/xapian-config-1.5"
+  - CPPFLAGS="-I/usr/local/cyruslibs/include"
   - PATH="$CYRUSLIBS/bin:$PATH"
   - USE_CCACHE=1
 cache:
@@ -40,9 +41,11 @@ os: linux
 compiler: gcc
 install:
 # cassandane
+- sudo sh -c 'echo 1 > /proc/sys/kernel/core_uses_pid'
+- sudo sh -c 'echo 1 > /proc/sys/fs/suid_dumpable'
+- ulimit -c unlimited
 - sudo mkdir /var/tmp/cass
 - sudo chmod 777 /var/tmp/cass
-- mkdir ~/extlib
 - curl -L https://cpanmin.us | sudo perl - --sudo App::cpanminus
 - sudo cpanm --notest experimental
 - sudo cpanm --notest AnyEvent
@@ -124,13 +127,15 @@ before_script:
 - ./configure CFLAGS="-W -Wno-unused-parameter -g -O0 -Wall -Wextra -Werror -fPIC"
   --enable-coverage --enable-calalarmd --enable-autocreate --enable-nntp --enable-http
   --enable-jmap --enable-xapian --enable-unit-tests --enable-replication --with-openssl=yes
-  --enable-murder --enable-idled --enable-sieve --prefix=/usr/cyrus/
+  --enable-murder --enable-idled --enable-sieve --enable-jmap --prefix=/usr/cyrus/  --with-cyrus-prefix=/usr/cyrus 
 - make
 - sudo make install
+- sudo make install-binsymlinks
+- sudo cp tools/mkimap /usr/cyrus/bin/mkimap
 script:
 # - make check
 - pushd cassandane
-- perl ./testrunner.pl -v --config ../cassandane.ini -f pretty -j 8
+- sudo perl ./testrunner.pl -v --config ../cassandane.ini -f pretty -j 8
 after_script:
 - sudo cat /var/log/syslog
 - sudo cat /var/log/messages
