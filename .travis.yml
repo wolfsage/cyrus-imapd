@@ -135,6 +135,7 @@ before_script:
 script:
 # - make check
 - pushd cassandane
+- make
 - sudo perl ./testrunner.pl -v --config ../cassandane.ini -f pretty -j 8
 after_script:
 - sudo cat /var/log/syslog
