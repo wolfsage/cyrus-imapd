@@ -26,8 +26,6 @@ addons:
     - pkg-config
 env:
   global:
-  - PERL5LIB=~/extlib/lib/perl5/
-  - PERLLIB=~/extlib/lib/perl5/
   - CYRUS_USER=travis
   - CYRUSLIBS="/usr/local/cyruslibs"
   - PKG_CONFIG_PATH="$CYRUSLIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -45,48 +43,49 @@ install:
 - sudo mkdir /var/tmp/cass
 - sudo chmod 777 /var/tmp/cass
 - mkdir ~/extlib
-- cpanm -L ~/extlib --notest experimental
-- cpanm -L ~/extlib --notest AnyEvent
-- cpanm -L ~/extlib --notest BSD::Resource
-- cpanm -L ~/extlib --notest Clone
-- cpanm -L ~/extlib --notest Config::IniFiles
-- cpanm -L ~/extlib --notest Convert::Base64
-- cpanm -L ~/extlib --notest Data::ICal
-- cpanm -L ~/extlib --notest Data::ICal::TimeZone
-- cpanm -L ~/extlib --notest Data::UUID
-- cpanm -L ~/extlib --notest DateTime
-- cpanm -L ~/extlib --notest DateTime::Format::ICal
-- cpanm -L ~/extlib --notest DateTime::Format::ISO8601
-- cpanm -L ~/extlib --notest Encode::IMAPUTF7
-- cpanm -L ~/extlib --notest File::LibMagic
-- cpanm -L ~/extlib --notest File::Slurp
-- cpanm -L ~/extlib --notest File::chdir
-- cpanm -L ~/extlib --notest HTTP::Tiny
-- cpanm -L ~/extlib --notest IO::Socket::INET6
-- cpanm -L ~/extlib --notest IO::Stringy
-- cpanm -L ~/extlib --notest JSON
-- cpanm -L ~/extlib --notest JSON::XS
-- cpanm -L ~/extlib --notest List::Pairwise
-- cpanm -L ~/extlib --notest MIME::Types
-- cpanm -L ~/extlib --notest Mail::IMAPTalk
-- cpanm -L ~/extlib --notest Math::Int64
-- cpanm -L ~/extlib --notest Net::LDAP::Server
-- cpanm -L ~/extlib --notest Net::Server
-- cpanm -L ~/extlib --notest News::NNTPClient
-- cpanm -L ~/extlib --notest String::CRC32
-- cpanm -L ~/extlib --notest Test::Unit
-- cpanm -L ~/extlib --notest Text::LevenshteinXS
-- cpanm -L ~/extlib --notest Text::VCardFast
-- cpanm -L ~/extlib --notest Tie::DataUUID
-- cpanm -L ~/extlib --notest Unix::Syslog
-- cpanm -L ~/extlib --notest XML::DOM
-- cpanm -L ~/extlib --notest XML::Fast
-- cpanm -L ~/extlib --notest XML::Generator
-- cpanm -L ~/extlib --notest XML::Spice
-- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Mail-JMAPTalk.git
-- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-DAVTalk.git
-- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
-- cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
+- curl -L https://cpanmin.us | sudo perl - --sudo App::cpanminus
+- sudo cpanm --notest experimental
+- sudo cpanm --notest AnyEvent
+- sudo cpanm --notest BSD::Resource
+- sudo cpanm --notest Clone
+- sudo cpanm --notest Config::IniFiles
+- sudo cpanm --notest Convert::Base64
+- sudo cpanm --notest Data::ICal
+- sudo cpanm --notest Data::ICal::TimeZone
+- sudo cpanm --notest Data::UUID
+- sudo cpanm --notest DateTime
+- sudo cpanm --notest DateTime::Format::ICal
+- sudo cpanm --notest DateTime::Format::ISO8601
+- sudo cpanm --notest Encode::IMAPUTF7
+- sudo cpanm --notest File::LibMagic
+- sudo cpanm --notest File::Slurp
+- sudo cpanm --notest File::chdir
+- sudo cpanm --notest HTTP::Tiny
+- sudo cpanm --notest IO::Socket::INET6
+- sudo cpanm --notest IO::Stringy
+- sudo cpanm --notest JSON
+- sudo cpanm --notest JSON::XS
+- sudo cpanm --notest List::Pairwise
+- sudo cpanm --notest MIME::Types
+- sudo cpanm --notest Mail::IMAPTalk
+- sudo cpanm --notest Math::Int64
+- sudo cpanm --notest Net::LDAP::Server
+- sudo cpanm --notest Net::Server
+- sudo cpanm --notest News::NNTPClient
+- sudo cpanm --notest String::CRC32
+- sudo cpanm --notest Test::Unit
+- sudo cpanm --notest Text::LevenshteinXS
+- sudo cpanm --notest Text::VCardFast
+- sudo cpanm --notest Tie::DataUUID
+- sudo cpanm --notest Unix::Syslog
+- sudo cpanm --notest XML::DOM
+- sudo cpanm --notest XML::Fast
+- sudo cpanm --notest XML::Generator
+- sudo cpanm --notest XML::Spice
+- sudo cpanm --notest https://github.com/cyrusimap/Mail-JMAPTalk.git
+- sudo cpanm --notest https://github.com/cyrusimap/Net-DAVTalk.git
+- sudo cpanm --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
+- sudo cpanm --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
 - git clone -b travis --single-branch https://github.com/wolfsage/cassandane.git cassandane
 
 # libjanson
@@ -131,7 +130,7 @@ before_script:
 script:
 # - make check
 - pushd cassandane
-- perl -I ~/extlib/lib/perl5/ ./testrunner.pl -vvv --config ../cassandane.ini -f pretty -j 8
+- perl ./testrunner.pl -vvv --config ../cassandane.ini -f pretty -j 8
 after_script:
 - sudo cat /var/log/syslog
 - sudo cat /var/log/messages
