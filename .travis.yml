@@ -87,7 +87,7 @@ install:
 - cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-DAVTalk.git
 - cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CalDAVTalk.git
 - cpanm -L ~/extlib --notest https://github.com/cyrusimap/Net-CardDAVTalk.git
-- git clone -b master --single-branch https://github.com/cyrusimap/cassandane.git cassandane
+- git clone -b travis --single-branch https://github.com/wolfsage/cassandane.git cassandane
 
 # libjanson
 - git clone -b cyrus --single-branch https://github.com/cyrusimap/jansson.git janson
