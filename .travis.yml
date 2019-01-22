@@ -26,6 +26,8 @@ addons:
     - pkg-config
 env:
   global:
+  - PERL5LIB=~/extlib
+  - PERLLIB=~/extlib
   - CYRUS_USER=travis
   - CYRUSLIBS="/usr/local/cyruslibs"
   - PKG_CONFIG_PATH="$CYRUSLIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
