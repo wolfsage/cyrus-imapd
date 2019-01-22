@@ -129,8 +129,10 @@ before_script:
 script:
 # - make check
 - pushd cassandane
-- perl -I ~/extlib/lib/perl5/ ./testrunner.pl --config ../cassandane.ini -f pretty -j 8
-  
+- perl -I ~/extlib/lib/perl5/ ./testrunner.pl -vvv --config ../cassandane.ini -f pretty -j 8
+after_script:
+- sudo cat /var/log/syslog
+- sudo cat /var/log/messages
 branches:
   only:
   - master
