@@ -1,0 +1,25 @@
+name: Cyrus IMAP CI - make check quick test
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+      - main
+      - cyrus-imapd-3.6
+      - cyrus-imapd-3.4
+      - cyrus-imapd-3.2
+      - cyrus-imapd-3.0
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+        image: cyrusimapdocker/cyrus-buster:latest
+        options: --sysctl net.ipv6.conf.all.disable_ipv6=0 --init
+    steps:
+    - uses: actions/checkout@v3
+    - name: configure and build
+      run: |
+        git fetch --unshallow
+        git fetch --tags
+        ./tools/build-with-cyruslibs.sh
