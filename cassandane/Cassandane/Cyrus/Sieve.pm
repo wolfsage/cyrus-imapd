@@ -41,6 +41,7 @@ package Cassandane::Cyrus::Sieve;
 use Net::CalDAVTalk 0.12;
 use strict;
 use warnings;
+use v5.10;
 use IO::File;
 use version;
 use utf8;
@@ -51,6 +52,7 @@ use Date::Parse;
 use lib '.';
 use base qw(Cassandane::Cyrus::TestCase);
 use Cassandane::Util::Log;
+use Cassandane::Util::Slurp;
 use Encode qw(decode);
 use MIME::Base64 qw(encode_base64);
 use Data::Dumper;
@@ -397,6 +399,68 @@ EOF
     $self->{store}->set_folder($target);
     $msg1->set_attribute(flags => [ '\\Recent', '\\Flagged' ]);
     $self->check_messages({ 1 => $msg1 }, check_guid => 0);
+}
+
+sub compile_and_run_sieve_test
+{
+    my ($self, $script, $email) = @_;
+
+    state $uniq = 0;
+
+    my $name = "sieve" . $uniq++;
+
+    my ($res, $errs) = $self->compile_sievec($name, $script);
+    $self->assert_str_equals('success', $res);
+
+    my $basedir = $self->{instance}->{basedir};
+    my $sieve_bc = "$basedir/$name.bc";
+
+    # Remove blank lines, make sure email uses \r\n line endings, end with
+    # a final blank line
+    $email =~ s/^\s+//sg;
+    $email =~ s/(?<!\r)\n/\r\n/smg;
+    if ($email !~ m/\r\n$/sm) {
+        $email .= "\r\n";
+    }
+
+    my ($fh, $email_file) = tempfile('tmpemailXXXXXX',
+        DIR => $basedir . "/tmp", UNLINK => 0);
+
+    binmode($fh, ":encoding(UTF-8)");
+
+    print { $fh } $email;
+
+    close $fh;
+
+    my (undef, $stderr_file) = tempfile("$name.stderr.XXXXXX", OPEN => 0,
+        DIR => $basedir . "/tmp", UNLINK => 0);
+
+    my (undef, $stdout_file) = tempfile("$name.stdout.XXXXXX", OPEN => 0,
+        DIR => $basedir . "/tmp", UNLINK => 0);
+
+    xlog $self, "Running test on script $sieve_bc with email $email_file";
+    my $result = $self->{instance}->run_command(
+            {
+                cyrus => 1,
+                redirects => {
+                  stderr => $stderr_file,
+                  stdout => $stdout_file,
+                },
+                handlers => {
+                    exited_normally => sub { return 'success'; },
+                    exited_abnormally => sub { return 'failure'; },
+                },
+            },
+            "test", "-r", "n", $email_file, $sieve_bc);
+
+    $self->assert_str_equals('success', $result);
+
+    my $stderr = slurp_file($stderr_file);
+    my $stdout = slurp_file($stdout_file);
+
+    xlog $self, "STDERR: $stderr, STDOUT: $stdout";
+
+    return ($result, $stdout, $stderr);
 }
 
 use Cassandane::Tiny::Loader 'tiny-tests/Sieve';
