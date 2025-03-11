@@ -143,7 +143,7 @@ BUILT_SOURCES += com_err/et/compile_et com_err/et/libcyrus_com_err.la
 lib_LTLIBRARIES += com_err/et/libcyrus_com_err.la
 endif # COM_ERR
 
-bin_PROGRAMS = imtest/imtest
+bin_PROGRAMS = imtest/imtest sieve/test
 
 if SERVER
 BUILT_SOURCES += \
@@ -298,7 +298,7 @@ endif # PERL
 BUILT_SOURCES += sieve/addr.c sieve/sieve.c sieve/sieve_err.c
 noinst_LTLIBRARIES += sieve/libcyrus_sieve_lex.la
 lib_LTLIBRARIES += sieve/libcyrus_sieve.la
-check_PROGRAMS += sieve/test sieve/test_mailbox
+check_PROGRAMS += sieve/test_mailbox
 sbin_PROGRAMS += sieve/sievec sieve/sieved
 
 if SERVER
