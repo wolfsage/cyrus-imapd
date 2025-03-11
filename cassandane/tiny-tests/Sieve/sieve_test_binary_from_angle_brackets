@@ -1,0 +1,41 @@
+#!perl
+use Cassandane::Tiny;
+
+sub test_sieve_test_binary_from_angle_brackets
+    :min_version_3_2 :needs_search_xapian
+{
+    my ($self) = @_;
+
+    my $sieve = <<~'EOF';
+        require ["fileinto", "vnd.cyrus.jmapquery" ];
+        
+        if jmapquery text:
+          {
+             "conditions" : [
+                {
+                   "from" : "example@example.mil"
+                }
+              ],
+              "operator": "AND"
+          }
+        .
+        {
+          fileinto "INBOX.folder";
+        }
+        EOF
+
+    for my $from ('example@example.mil', '<example@example.mil>') {
+        my $email = <<~EOF;
+            From: $from
+            
+            Body.
+            EOF
+
+        my ($res, $stdout, $stderr) = $self->compile_and_run_sieve_test(
+            $sieve, $email
+        );
+
+        $self->assert_str_equals('success', $res);
+        $self->assert_matches(qr/filing message.*into 'INBOX.folder'/, $stdout);
+    }
+}
