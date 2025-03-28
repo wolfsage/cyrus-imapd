@@ -247,7 +247,7 @@ static int read_cb(sqlite3_stmt *stmt, void *rock)
         cdata->dav.lock_token = (const char *) sqlite3_column_text(stmt, 5);
         cdata->dav.lock_owner = (const char *) sqlite3_column_text(stmt, 6);
         cdata->dav.lock_ownerid = (const char *) sqlite3_column_text(stmt, 7);
-        cdata->vcard_uid = (const char *) sqlite3_column_text(stmt, 10);
+        cdata->vcard_uid = xstrdup((const char *) sqlite3_column_text(stmt, 10));
         cdata->fullname = (const char *) sqlite3_column_text(stmt, 12);
         cdata->name = (const char *) sqlite3_column_text(stmt, 13);
         cdata->nickname = (const char *) sqlite3_column_text(stmt, 14);
@@ -273,9 +273,9 @@ static int read_cb(sqlite3_stmt *stmt, void *rock)
         cdata->dav.lock_ownerid =
             column_text_to_buf((const char *) sqlite3_column_text(stmt, 7),
                                &db->bufs[4]);
-        cdata->vcard_uid =
+        cdata->vcard_uid = xstrdup(
             column_text_to_buf((const char *) sqlite3_column_text(stmt, 10),
-                               &db->bufs[5]);
+                               &db->bufs[5]));
         cdata->fullname =
             column_text_to_buf((const char *) sqlite3_column_text(stmt, 12),
                                &db->bufs[6]);
