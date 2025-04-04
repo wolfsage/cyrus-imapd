@@ -1003,7 +1003,7 @@ EXPORTED int mboxlist_lookup_by_uniqueid(const char *uniqueid,
 /*
  * read a single _J_mapid record from the mailboxes.db and return a pointer to it
  */
-static int mboxlist_read_jmapid(const char *inboxid, const char *jmapid,
+static int mboxlist_read_jmapid(const char *userid, const char *jmapid,
                                 const char **dataptr, size_t *datalenptr,
                                 struct txn **tid, int wrlock)
 {
@@ -1013,7 +1013,7 @@ static int mboxlist_read_jmapid(const char *inboxid, const char *jmapid,
     if (!jmapid)
         return IMAP_MAILBOX_NONEXISTENT;
 
-    mboxlist_jmapid_to_key(inboxid, jmapid, &key);
+    mboxlist_jmapid_to_key(userid, jmapid, &key);
 
     if (wrlock) {
         r = cyrusdb_fetchlock(mbdb, buf_base(&key), buf_len(&key),
@@ -1048,10 +1048,39 @@ static int mboxlist_read_jmapid(const char *inboxid, const char *jmapid,
     return r;
 }
 
+EXPORTED char *mboxlist_find_jmapid(const char *jmapid,
+                                    const char *userid,
+                                    const struct auth_state *auth_state __attribute__((unused)))
+{
+    int r;
+    const char *data;
+    size_t datalen;
+    mbentry_t *mbentry = NULL;
+    char *mbname = NULL;
+
+    init_internal();
+
+    r = mboxlist_read_jmapid(userid, jmapid, &data, &datalen, NULL, 0);
+    if (r) return NULL;
+
+    r = mboxlist_parse_entry(&mbentry, NULL, 0, data, datalen);
+    if (r) return NULL;
+
+    // only note the name down if it's not deleted
+    if (!(mbentry->mbtype & MBTYPE_DELETED)) {
+        mbname = mbentry->name;
+        mbentry->name = NULL;
+    }
+
+    mboxlist_entry_free(&mbentry);
+
+    return mbname;
+}
+
 /*
- * Lookup 'uniqueid' in the mailbox list, ignoring reserved records
+ * Lookup 'jmapid' in the mailbox list, ignoring reserved records
  */
-EXPORTED int mboxlist_lookup_by_jmapid(const char *inboxid, const char *jmapid,
+EXPORTED int mboxlist_lookup_by_jmapid(const char *userid, const char *jmapid,
                                        mbentry_t **entryptr, struct txn **tid)
 {
     mbentry_t *entry = NULL;
@@ -1061,7 +1090,7 @@ EXPORTED int mboxlist_lookup_by_jmapid(const char *inboxid, const char *jmapid,
 
     init_internal();
 
-    r = mboxlist_read_jmapid(inboxid, jmapid, &data, &datalen, tid, 0);
+    r = mboxlist_read_jmapid(userid, jmapid, &data, &datalen, tid, 0);
     if (r) return r;
 
     r = mboxlist_parse_entry(&entry, NULL, 0, data, datalen);
