@@ -59,7 +59,27 @@ use Cyrus::IndexFile;
 sub new
 {
     my $class = shift;
-    return $class->SUPER::new({ adminstore => 1 }, @_);
+
+    my $config = Cassandane::Config->default()->clone();
+    $config->set(caldav_realm => 'Cassandane',
+                 conversations => 'yes',
+                 conversations_counted_flags => "\\Draft \\Flagged \$IsMailingList \$IsNotification \$HasAttachment",
+                 httpmodules => 'carddav caldav jmap',
+                 specialuse_extra => '\\XSpecialUse \\XChats \\XTemplates \\XNotes',
+                 notesmailbox => 'Notes',
+                 httpallowcompress => 'no');
+
+
+    my $self = $class->SUPER::new({
+        config => $config,
+        jmap => 1,
+        adminstore => 1,
+        services => ['imap', 'http'],
+    }, @_);
+
+    $self->needs('component', 'jmap');
+
+    return $self;
 }
 
 sub set_up
@@ -647,6 +667,9 @@ sub test_upgrade_v19_to_v20
     my $data_file = abs_path("data/old-mailboxes/version19.tar.gz");
     die "Old mailbox data does not exist: $data_file" if not -f $data_file;
 
+    $self->{instance}->stop();
+    $self->{instance}->{re_use_dir} = 1;
+
     xlog "installing version 19 mailboxes";
     $self->{instance}->unpackfile($data_file, $self->{instance}->get_basedir());
     $self->{instance}->unpackfile($data_file, $self->{replica}->get_basedir());
@@ -661,6 +684,8 @@ sub test_upgrade_v19_to_v20
     xlog $self, "Upgrade master to conv.db version 2";
     $self->{instance}->run_command({ cyrus => 1 },
                                    'ctl_conversationsdb', '-U', '-r');
+
+    $self->{instance}->start();
 
     # replicate new version to old version
     $self->run_replication();
@@ -686,6 +711,33 @@ sub test_upgrade_v19_to_v20
     my $id2 = $res->{2}{emailid}[0];
     my $id3 = $res->{3}{emailid}[0];
     my $id4 = $res->{4}{emailid}[0];
+
+    my $jmap = $self->{jmap};
+
+    my $jres = $jmap->CallMethods([['Mailbox/get', {}, "R1"]]);
+    my ($mbox) = grep { $_->{name} eq "foo" } @{$jres->[0][1]{list}};
+    $self->assert_not_null($mbox);
+    $self->assert_not_null($mbox->{id});
+    xlog $self, "ID: $mbox->{id}";
+
+    # Prepare test email
+    my $email =  {
+        mailboxIds => { $mbox->{id} => JSON::true },
+        from => [ { email => q{test1@robmtest.vm}, name => q{} } ],
+        'header:foo' => undef,
+        'header:foo:asMessageIds' => undef,
+    };
+
+    # Create and get mail
+    my $xres = $jmap->CallMethods([
+        ['Email/set', { create => { "1" => $email }}, "R1"],
+        ['Email/get', {
+            ids => [ "#1" ],
+            properties => [ 'headers', 'header:foo' ],
+        }, "R2" ],
+    ]);
+
+    warn Dumper($xres);
 
     $talk->examine('INBOX.foo');
     $res = $talk->fetch('1:*', '(UID EMAILID)');
