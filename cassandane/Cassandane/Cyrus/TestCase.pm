@@ -917,6 +917,12 @@ sub _setup_http_service_objects
 
         my $ws_base = $base =~ s/^http:/ws:/r;
 
+        # Ugh. We must load AnyEvent::Loop before JMAP::Tester::WebSocket,
+        # otherwise AnyEvent in Cassandane::Instance::notifyd will use
+        # AnyEvent::Impl::IOAsync which is ... not actually running (except
+        # when ::WebSocket makes a request) ... which will make the perl
+        # notifyd process hang and lock up the tests
+        require AnyEvent::Loop;
         require JMAP::Tester::WebSocket;
         $self->{jmap_tester_ws} = JMAP::Tester::WebSocket->new({
             %jt_args,
