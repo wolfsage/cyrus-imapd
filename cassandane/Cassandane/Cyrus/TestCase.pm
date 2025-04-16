@@ -1859,4 +1859,19 @@ sub jmap           { shift->_get_jmaplike_instance("jmap");           }
 sub jmap_tester    { shift->_get_jmaplike_instance("jmap_tester");    }
 sub jmap_tester_ws { shift->_get_jmaplike_instance("jmap_tester_ws"); }
 
+sub jmap_default_using
+{
+    my ($self, $using) = @_;
+
+    unless ($self->{jmap}) {
+        Carp::confess("jmap unavailable. Does httpmodules include jmap?");
+    }
+
+    $self->jmap->DefaultUsing($using);
+    $self->jmap_tester->default_using($using);
+    $self->jmap_tester_ws->default_using($using);
+
+    return;
+}
+
 1;
