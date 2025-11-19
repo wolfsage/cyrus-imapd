@@ -159,6 +159,24 @@ extern int jmap_headermatch_match(struct jmap_headermatch *hm, message_t *msg);
 extern void jmap_headermatch_serialize(struct jmap_headermatch*, struct buf*);
 
 
+/* Set of addressbooks owned by userid and accessible by accountId */
+struct abook_set {
+    char *userid;
+    struct carddav_db *carddavdb;  // DAV DB for userid
+    ptrarray_t mbentrys;           // NULL = ALL abooks owned by userid
+};
+
+extern ptrarray_t *jmap_get_accessible_addressbooks(const char *accountid,
+                                                    const struct auth_state *authstate,
+                                                    const struct namespace *namespace,
+                                                    struct carddav_db *carddavdb);
+
+extern void jmap_free_abook_sets(ptrarray_t *abook_sets);
+
+extern void jmap_get_card_emails(strarray_t *card_uids, unsigned card_kind,
+                                 ptrarray_t *abook_sets,
+                                 strarray_t *emails, strarray_t **member_uids);
+
 #endif /* WITH_DAV */
 
 #endif /* JMAP_MAIL_QUERY_H */
