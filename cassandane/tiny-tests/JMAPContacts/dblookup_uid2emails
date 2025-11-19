@@ -6,46 +6,19 @@ sub test_dblookup_uid2emails
     :JMAPExtensions :NoAltNameSpace
 {
     my ($self) = @_;
-    my $jmap = $self->{jmap};
-    my $imap = $self->{store}->get_client();
+
+    my $user = $self->default_user;
+    my $imap = $user->imap;
+    my $other = $self->{instance}->create_user("other");
+    my $other2 = $self->{instance}->create_user("other2");
     my $admin = $self->{adminstore}->get_client();
 
-    xlog "Create shared addressbooks";
-    $admin->create("user.other");
-    my $http = $self->{instance}->get_service("http");
-    my $otherJmap = Mail::JMAPTalk->new(
-        user => 'other',
-        password => 'pass',
-        host => $http->host(),
-        port => $http->port(),
-        scheme => 'http',
-        url => '/jmap/',
-    );
-
-    $admin->create("user.other2");
-    my $otherJmap2 = Mail::JMAPTalk->new(
-        user => 'other2',
-        password => 'pass',
-        host => $http->host(),
-        port => $http->port(),
-        scheme => 'http',
-        url => '/jmap/',
-    );
-
-    my $adminJmap = Mail::JMAPTalk->new(
-        user => 'admin',
-        password => 'pass',
-        host => $http->host(),
-        port => $http->port(),
-        scheme => 'http',
-        url => '/jmap/',
-    );
-
-    xlog $self, "Enable compactids";
-    $self->{instance}->run_command({ cyrus => 1 },
-                                   'ctl_conversationsdb', '-I', 'on', 'other');
-    $self->{instance}->run_command({ cyrus => 1 },
-                                   'ctl_conversationsdb', '-I', 'on', 'other2');
+    $_->jmap->DefaultUsing([
+        'urn:ietf:params:jmap:core',
+        'urn:ietf:params:jmap:contacts',
+        'https://cyrusimap.org/ns/jmap/contacts',
+        'https://cyrusimap.org/ns/jmap/debug',
+    ]) for ($other, $other2);
 
     $admin->create("user.other.#addressbooks.Shared", ['TYPE', 'ADDRESSBOOK']);
     my $abookId = $admin->get_response_code('mailboxid')->[0];
@@ -71,124 +44,85 @@ sub test_dblookup_uid2emails
     substr($abookId3, 0, 1) = "R";
     substr($abookId4, 0, 1) = "R";
 
-    my $using = [
-        'urn:ietf:params:jmap:core',
-        'urn:ietf:params:jmap:mail',
-        'urn:ietf:params:jmap:contacts',
-        'https://cyrusimap.org/ns/jmap/mail',
-    ];
+    my $abook = $other->addressbooks->get($abookId);
+    my $shared1 = $abook->create_card({
+        emails => {
+            e1 => {
+                address => 'sharedcontact@local'
+            }
+        },
+    });
 
-    xlog "Create contacts in shared addressbooks";
-    my $res = $otherJmap->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                sharedContact => {
-                    emails => {
-                        e1 => {
-                            address => 'sharedcontact@local'
-                        }
-                    },
-                    addressBookIds => { $abookId => JSON::true }
-                },
-            },
-        }, 'R1'],
-    ], $using);
-    my $sharedContactUid = $res->[0][1]{created}{sharedContact}{uid};
-    $self->assert_not_null($sharedContactUid);
+    my $abook2 = $other2->addressbooks->get($abookId2);
+    my $shared2 = $abook2->create_card({
+        emails => {
+            e1 => {
+                address => 'sharedcontact2@local'
+            }
+        },
+    });
 
-    $res = $otherJmap2->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                sharedContact2 => {
-                    emails => {
-                        e1 => {
-                            address => 'sharedcontact2@local'
-                        }
-                    },
-                    addressBookIds => { $abookId2 => JSON::true }
-                },
-                unsharedContact => {
-                    emails => {
-                        e1 => {
-                            address => 'unsharedcontact@local'
-                        }
-                    },
-                    addressBookIds => { $abookId4 => JSON::true }
-                },
-            },
-        }, 'R1'],
-    ], $using);
-    my $sharedContactUid2 = $res->[0][1]{created}{sharedContact2}{uid};
-    $self->assert_not_null($sharedContactUid2);
-    my $unsharedContactUid = $res->[0][1]{created}{unsharedContact}{uid};
-    $self->assert_not_null($unsharedContactUid);
+    my $abook4 = $other2->addressbooks->get($abookId4);
+    my $unshared1 = $abook4->create_card({
+        emails => {
+            e1 => {
+                address => 'unsharedcontact@local'
+            }
+        },
+    });
 
-    xlog "Create contact in own addressbook";
-    $res = $jmap->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                ownContact => {
-                    emails => {
-                        e1 => {
-                            address => 'ownContact@local'
-                        }
-                    },
-                },
-            },
-        }, 'R1'],
-    ], $using);
-    my $ownContactUid = $res->[0][1]{created}{ownContact}{uid};
-    $self->assert_not_null($ownContactUid);
+    my $own_abook = $user->addressbooks->create;
+    my $own1 = $own_abook->create_card({
+        emails => {
+            e1 => {
+                address => 'ownContact@local'
+            }
+        },
+    });
 
-    xlog "Create group in own addressbook";
-    $res = $jmap->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                ownGroup => {
-                    kind => 'group',
-                    members => {
-                        $sharedContactUid => JSON::true,
-                        $sharedContactUid2 => JSON::true,
-                    },
-                    emails => {
-                        e1 => {
-                            address => 'ownGroup@local'
-                        }
-                    },
-                },
-            },
-        }, 'R1'],
-    ], $using);
-    my $ownGroupUid = $res->[0][1]{created}{ownGroup}{uid};
-    $self->assert_not_null($ownGroupUid);
+    my $owngroup1 = $own_abook->create_card({
+        kind => 'group',
+        members => {
+            $shared1->uid => JSON::true,
+            $shared2->uid => JSON::true,
+        },
+        emails => {
+            e1 => {
+                address => 'ownGroup@local'
+            }
+        },
+    });
 
-    xlog "Create group in shared addressbook";
-    $res = $otherJmap2->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                sharedGroup => {
-                    kind => 'group',
-                    members => {
-                        $ownContactUid => JSON::true,
-                        $sharedContactUid => JSON::true,
-                    },
-                    addressBookIds => { $abookId3 => JSON::true }
-                },
-            },
-        }, 'R1'],
-    ], $using);
-    my $sharedGroupUid = $res->[0][1]{created}{sharedGroup}{uid};
-    $self->assert_not_null($sharedGroupUid);
+    my $abook3 = $other2->addressbooks->get($abookId3);
+
+    my $sharedgroup1 = $abook3->create_card({
+        kind => 'group',
+        members => {
+            $own1->uid    => JSON::true,
+            $shared1->uid => JSON::true,
+        },
+    });
+
+    my $http = $self->{instance}->get_service("http");
+
+    my $adminJmap = Mail::JMAPTalk->new(
+        user => 'admin',
+        password => 'pass',
+        host => $http->host(),
+        port => $http->port(),
+        scheme => 'http',
+        url => '/jmap/',
+    );
 
     my $dbLookupUrl = "http://"
         . $http->host . ":" . $http->port
         . "/dblookup/uid2emails";
 
     # lookup ownContactUid
-    $res = $adminJmap->ua->get($dbLookupUrl, {
+    my $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'cassandane',
-            Key => $ownContactUid
+            Key => $own1->uid,
         },
     });
     $self->assert_deep_equals([ 'ownContact@local' ],
@@ -198,7 +132,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'cassandane',
-            Key => $sharedContactUid
+            Key => $shared1->uid,
         },
     });
     $self->assert_deep_equals([ 'sharedcontact@local' ],
@@ -208,7 +142,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'cassandane',
-            Key => $unsharedContactUid
+            Key => $unshared1->uid,
         },
     });
     $self->assert_str_equals('204', $res->{status});
@@ -217,7 +151,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'cassandane',
-            Key => $ownGroupUid
+            Key => $owngroup1->uid,
         },
     });
     $self->assert_cmp_deeply(bag( 'ownGroup@local',
@@ -229,7 +163,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'cassandane',
-            Key => $sharedGroupUid
+            Key => $sharedgroup1->uid,
         },
     });
 
@@ -241,7 +175,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'other2',
-            Key => $ownContactUid
+            Key => $own1->uid,
         },
     });
     $self->assert_str_equals('204', $res->{status});
@@ -250,7 +184,7 @@ sub test_dblookup_uid2emails
     $res = $adminJmap->ua->get($dbLookupUrl, {
         headers => {
             User => 'other2',
-            Key => $sharedContactUid
+            Key => $shared1->uid,
         },
     });
     $self->assert_str_equals('204', $res->{status});
