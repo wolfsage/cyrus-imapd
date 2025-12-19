@@ -1,0 +1,122 @@
+#!perl
+use Cassandane::Tiny;
+
+sub test_card_set_multiple_addressbookids
+    :needs_dependency_icalvcard
+{
+    my ($self) = @_;
+    my $jmap = $self->{jmap};
+
+    xlog $self, "get default addressbook";
+    my $res = $jmap->CallMethods([
+            ['AddressBook/get', { }, "R1"]
+    ]);
+    my $abookid1 = $res->[0][1]{list}[0]{id};
+
+    xlog $self, "create addressbook";
+    $res = $jmap->CallMethods([
+            ['AddressBook/set', { create => { "1" => {
+                            name => "foo",
+                            description => "My foo",
+             }}}, "R1"]
+    ]);
+    my $abookid2 = $res->[0][1]{created}{"1"}{id};
+
+    my $prodid = '-//Example Corp.//CardDAV Client//EN';
+    my $name = 'Mr. John Q. Public, Esq.';
+    my $uid = 'urn:uuid:ae2640cc-234a-4dd9-95cc-3106258445b9';
+
+    xlog $self, "attempt to create a card in multiple addressbooks";
+    $res = $jmap->CallMethods([
+        ['ContactCard/set', {
+            create => {
+                "1" => {
+                    '@type' => 'Card',
+                    version => '1.0',
+                    uid => $uid,
+                    prodId => $prodid,
+                    kind => 'individual',
+                    name => { full => $name },
+                    addressBookIds => {
+                        $abookid1 => JSON::true,
+                        $abookid2 => JSON::true
+                    }
+                }
+            }
+        }, 'R1']
+    ]);
+    $self->assert_not_null($res->[0][1]{notCreated}{1});
+    $self->assert_str_equals('invalidProperties',
+                                $res->[0][1]{notCreated}{1}{type});
+    $self->assert_str_equals('addressBookIds',
+                             $res->[0][1]{notCreated}{1}{properties}[0]);
+
+    xlog $self, "create a card in a single addressbook";
+    $res = $jmap->CallMethods([
+        ['ContactCard/set', {
+            create => {
+                "1" => {
+                    '@type' => 'Card',
+                    version => '1.0',
+                    uid => $uid,
+                    prodId => $prodid,
+                    kind => 'individual',
+                    name => { full => $name },
+                    addressBookIds => {
+                        $abookid1 => JSON::true
+                    }
+                }
+            }
+        }, 'R1']
+    ]);
+    $self->assert_not_null($res->[0][1]{created}{1});
+    my $id = $res->[0][1]{created}{1}{id};
+
+    xlog $self, "attempt to update a card to be in multiple addressbooks";
+    $res = $jmap->CallMethods([
+        ['ContactCard/set', {
+            update => {
+                $id => {
+                    addressBookIds => {
+                        $abookid1 => JSON::true,
+                        $abookid2 => JSON::true
+                    }
+                }
+            }
+         }, "R1"]
+    ]);
+    $self->assert_not_null($res->[0][1]{notUpdated}{$id});
+    $self->assert_str_equals('invalidProperties',
+                                $res->[0][1]{notUpdated}{$id}{type});
+    $self->assert_str_equals('addressBookIds',
+                             $res->[0][1]{notUpdated}{$id}{properties}[0]);
+
+    xlog $self, "attempt to patch a card be in multiple addressbooks";
+    $res = $jmap->CallMethods([
+        ['ContactCard/set', {
+            update => {
+                $id => {
+                    "addressBookIds/$abookid2" => JSON::true
+                }
+            }
+         }, "R1"]
+    ]);
+    $self->assert_not_null($res->[0][1]{notUpdated}{$id});
+    $self->assert_str_equals('invalidProperties',
+                                $res->[0][1]{notUpdated}{$id}{type});
+    $self->assert_str_equals('addressBookIds',
+                             $res->[0][1]{notUpdated}{$id}{properties}[0]);
+
+    xlog $self, "patch a card, moving it between addressbooks";
+    $res = $jmap->CallMethods([
+        ['ContactCard/set', {
+            update => {
+                $id => {
+                    "addressBookIds/$abookid1" => JSON::false,
+                    "addressBookIds/$abookid2" => JSON::true
+                }
+            }
+         }, "R1"]
+    ]);
+    $self->assert_not_null($res->[0][1]{updated}{$id});
+}
