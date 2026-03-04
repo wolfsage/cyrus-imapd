@@ -7,7 +7,7 @@
 AC_DEFUN([CMU_PERL_MAKEMAKER],[
 AC_CONFIG_FILES([$1/build.cfg:perl/build.cfg.in])
 AC_CONFIG_COMMANDS($1/Makefile,[
-    ( pwd && cd $1 && pwd \
+    ( pwd && cd $1 && pwd && ls -alh && realpath . && echo "P: $PERL, MMA: $MAKE_MAKER_ARGS" && realpath  ${ac_top_srcdir}/$1/Makefile.PL && ls -alh ${ac_top_srcdir}/ && ls -alh ${ac_top_srcdir}/$1/ \
       && $PERL ${ac_top_srcdir}/$1/Makefile.PL $MAKE_MAKER_ARGS
     ) || as_fn_error $? "failed to generate Makefile for $1"
 
