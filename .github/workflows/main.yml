@@ -7,6 +7,7 @@ on:
       - master
       - main
       - 'cyrus-imapd-*'
+      - '*'
   pull_request:
     branches:
       - master
@@ -75,7 +76,7 @@ jobs:
       if: ${{ matrix.pretest }}
       run: ${{ matrix.pretest }}
     - name: configure and build
-      run: cyd build "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}"
+      run: cyd build -j 6 "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}"
     - name: report version information
       run: |
         echo "debian" $(cat /etc/debian_version)
@@ -86,10 +87,10 @@ jobs:
       if: ${{ ! matrix.skip-cass }}
       id: cass1
       continue-on-error: true
-      run: cyd test --no-ok --slow --format prettier "${{ matrix.skip }}"
+      run: cyd test -j 6 --no-ok --slow --format prettier "${{ matrix.skip }}"
     - name: rerun cassandane failures noisily
       if: ${{ steps.cass1.outcome == 'failure' }}
-      run: cyd test --no-slow --format pretty --rerun
+      run: cyd test -j 6 --no-slow --format pretty --rerun
     - name: collect logs
       if: ${{ ! matrix.skip-cass }}
       run: cat /tmp/cass/*/conf/log/syslog
@@ -115,7 +116,7 @@ jobs:
     - name: configure and build
       run: |
         echo "building cyrus version" $(./tools/git-version.sh)
-        cyd build
+        cyd build -j 6
     - name: make check with valgrind
       run: |
         make VG=1 check-discrete
