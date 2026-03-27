@@ -358,7 +358,7 @@ sub kill_processes_on_ports
         # Silly netstat -p on Linux prints a warning to stderr
         # -n        numeric output
         # -p        show pid & program
-        my $cmd = "netstat -np 2>/dev/null";
+        my $cmd = "netstat -ntup 2>/dev/null | grep -ve '-\s*'";
 
         my $parser = $netstat_parse{$af};
         open NETSTAT,'-|',$cmd

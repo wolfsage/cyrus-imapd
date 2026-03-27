@@ -583,6 +583,8 @@ sub _find_binary
 {
     my ($self, $name) = @_;
 
+    return $self->{_binaries}{$name} if $self->{_binaries}{$name};
+
     my $cassini = Cassandane::Cassini->instance();
     my $name_override = $cassini->val("cyrus $self->{installation}", $name);
     $name = $name_override if defined $name_override;
@@ -594,7 +596,7 @@ sub _find_binary
     if ($name =~ m/xapian-.*$/) {
         my $lib = `ldd $base/libexec/imapd` || die "can't ldd imapd";
         $lib =~ m{(/\S+)/lib/libxapian(-([0-9.]+))?\.so};
-        return "$1/bin/$name$2";
+        return $self->{_binaries}{$name} = "$1/bin/$name$2";
     }
 
     foreach (qw( bin sbin libexec libexec/cyrus-imapd lib cyrus/bin ))
@@ -605,7 +607,7 @@ sub _find_binary
             if (grep { $_ eq $name } readdir $dh) {
                 xlog "Found binary $name in $dir";
                 closedir $dh;
-                return "$dir/$name";
+                return $self->{_binaries}{$name} = "$dir/$name";
             }
             closedir $dh;
         }
