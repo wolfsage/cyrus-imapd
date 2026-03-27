@@ -76,7 +76,7 @@ jobs:
       if: ${{ matrix.pretest }}
       run: ${{ matrix.pretest }}
     - name: configure and build
-      run: cyd build "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}" --jobs 6
+      run: cyd build "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}"
     - name: report version information
       run: |
         echo "debian" $(cat /etc/debian_version)
@@ -87,10 +87,10 @@ jobs:
       if: ${{ ! matrix.skip-cass }}
       id: cass1
       continue-on-error: true
-      run: cyd test --no-ok --slow --format prettier "${{ matrix.skip }}" --jobs 6
+      run: cyd test --no-ok --slow --format prettier "${{ matrix.skip }}" 
     - name: rerun cassandane failures noisily
       if: ${{ steps.cass1.outcome == 'failure' }}
-      run: cyd test --no-slow --format pretty --rerun --jobs 6
+      run: cyd test --no-slow --format pretty --rerun 
     - name: collect logs
       if: ${{ ! matrix.skip-cass }}
       run: cat /dev/shm/cass/*/conf/log/syslog
