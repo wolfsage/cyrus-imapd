@@ -5,69 +5,39 @@ sub test_card_query_windowing
     :min_version_3_9
     ($self)
 {
+    my $user = $self->default_user;
     my $jmap = $self->{jmap};
 
-    xlog $self, "create cards";
-    my $res = $jmap->CallMethods([
-        ['ContactCard/set', {
-            create => {
-                card1 => {
-                    '@type' => 'Card',
-                    version => '1.0',
-                    uid => 'XXX-UID-1',
-                    organizations => {
-                        'o1' => {
-                            name => 'companyB'
-                        }
-                    }
-                },
-                card2 => {
-                    '@type' => 'Card',
-                    version => '1.0',
-                    uid => 'XXX-UID-2',
-                    organizations => {
-                        'o1' => {
-                            name => 'companyA'
-                        }
-                    }
-                },
-                card3 => {
-                    '@type' => 'Card',
-                    version => '1.0',
-                    uid => 'XXX-UID-3',
-                    organizations => {
-                        'o1' => {
-                            name => 'companyB'
-                        }
-                    }
-                },
-                card4 => {
-                    '@type' => 'Card',
-                    version => '1.0',
-                    uid => 'XXX-UID-4',
-                    organizations => {
-                        'o1' => {
-                            name => 'companyC'
-                        }
-                    }
-                },
-            },
-        }, 'R1'],
-    ]);
-    my $cardId1 = $res->[0][1]{created}{card1}{id};
-    $self->assert_not_null($cardId1);
+    my $card1 = $user->contacts->create({
+      uid => 'XXX-UID-1',
+      organizations => {
+        o1 => { name => 'companyB' },
+      },
+    });
 
-    my $cardId2 = $res->[0][1]{created}{card2}{id};
-    $self->assert_not_null($cardId2);
+    my $card2 = $user->contacts->create({
+      uid => 'XXX-UID-2',
+      organizations => {
+        o1 => { name => 'companyA' },
+      },
+    });
 
-    my $cardId3 = $res->[0][1]{created}{card3}{id};
-    $self->assert_not_null($cardId3);
+    my $card3 = $user->contacts->create({
+      uid => 'XXX-UID-3',
+      organizations => {
+        o1 => { name => 'companyB' },
+      },
+    });
 
-    my $cardId4 = $res->[0][1]{created}{card4}{id};
-    $self->assert_not_null($cardId4);
+    my $card4 = $user->contacts->create({
+      uid => 'XXX-UID-4',
+      organizations => {
+        o1 => { name => 'companyC' },
+      },
+    });
 
     xlog $self, "run query with windowing";
-    $res = $jmap->CallMethods([
+    my $res = $jmap->CallMethods([
         ['ContactCard/query', {
             sort => [{
                 property => 'uid',
@@ -85,7 +55,7 @@ sub test_card_query_windowing
             sort => [{
                 property => 'uid',
             }],
-            anchor => $cardId3,
+            anchor => $card3->id,
             anchorOffset => -1,
             limit => 2,
         }, 'R3'],
@@ -99,32 +69,32 @@ sub test_card_query_windowing
     ]);
     # Request 1
     $self->assert_deep_equals([
-            $cardId1,
-            $cardId2,
+            $card1->id,
+            $card2->id,
         ], $res->[0][1]{ids}
     );
     $self->assert_num_equals(0, $res->[0][1]{position});
     $self->assert_num_equals(4, $res->[0][1]{total});
     # Request 2
     $self->assert_deep_equals([
-            $cardId3,
-            $cardId4,
+            $card3->id,
+            $card4->id,
         ], $res->[1][1]{ids}
     );
     $self->assert_num_equals(2, $res->[1][1]{position});
     $self->assert_num_equals(4, $res->[1][1]{total});
     # Request 3
     $self->assert_deep_equals([
-            $cardId2,
-            $cardId3,
+            $card2->id,
+            $card3->id,
         ], $res->[2][1]{ids}
     );
     $self->assert_num_equals(1, $res->[2][1]{position});
     $self->assert_num_equals(4, $res->[2][1]{total});
     # Request 4
     $self->assert_deep_equals([
-            $cardId3,
-            $cardId4,
+            $card3->id,
+            $card4->id,
         ], $res->[3][1]{ids}
     );
     $self->assert_num_equals(2, $res->[3][1]{position});
