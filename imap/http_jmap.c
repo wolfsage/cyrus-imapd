@@ -1438,6 +1438,9 @@ static int jmap_ws(struct transaction_t *txn, enum wslay_opcode opcode,
     /* Always start with fresh working buffer */
     buf_reset(&txn->buf);
 
+    /* Under websoockets each frame should have its own trace id */
+    trace_set_id(NULL, 0);
+
     /* Check the size of the request */
     if (buf_len(&txn->req_body.payload) >
         (size_t) my_jmap_settings.limits[MAX_SIZE_REQUEST]) {
@@ -1453,6 +1456,18 @@ static int jmap_ws(struct transaction_t *txn, enum wslay_opcode opcode,
     }
     else {
         const char *type = json_string_value(json_object_get(req, "@type"));
+        json_t *jlogHeaders = json_object_get(req, "logHeaders");
+        const char *hdrname;
+        json_t *jval;
+
+        json_object_foreach(jlogHeaders, hdrname, jval) {
+            if (!strcasecmpsafe(hdrname, "x-trace-id")) {
+                const char *val = json_string_value(jval);
+                trace_set_id(val, 0);
+
+                break;
+            }
+        }
 
         if (!strcmpsafe(type, "Request")) {
             /* Process the API request */
