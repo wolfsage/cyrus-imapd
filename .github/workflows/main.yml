@@ -46,6 +46,10 @@ jobs:
           - compiler: "--gcc"
             desc: "Non-UTC timezone"
             pretest: "ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && sudo dpkg-reconfigure --frontend noninteractive tzdata"
+          - compiler: "--gcc"
+            desc: "make-only cflags"
+            cflags: "-Og -fstack-protector-all -fno-semantic-interposition -Bsymbolic -fno-omit-frame-pointer"
+            make_only_cflags: "-m"
           - compiler: "--clang"
             desc: "clang+ubsan -Og trixie"
             # -Og finds more errors at compile time and gives speedups on testrun
@@ -77,7 +81,7 @@ jobs:
       if: ${{ matrix.pretest }}
       run: ${{ matrix.pretest }}
     - name: configure and build
-      run: cyd build "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}"
+      run: cyd build "${{ matrix.compiler }}" "${{ matrix.san }}" --cflags "${{ matrix.cflags }}" --cxxflags "${{ matrix.cxxflags }}" "${{ matrix.make_only_cflags }}"
     - name: report version information
       run: |
         echo "debian" $(cat /etc/debian_version)
